@@ -1,0 +1,13 @@
+[submodule "js/thirdparty/fingerprintjs2"]
+	path = js/thirdparty/fingerprintjs2
+	url = https://github.com/Valve/fingerprintjs2
+[submodule "js/thirdparty/plupload"]
+	path = js/thirdparty/plupload
+	url = https://github.com/bugdanov/plupload
+	branch = doxel
+[submodule "js/thirdparty/blueimp-load-image"]
+	path = js/thirdparty/blueimp-load-image
+	url = https://github.com/blueimp/JavaScript-Load-Image
+[submodule "js/thirdparty/jquery-cookie"]
+	path = js/thirdparty/jquery-cookie
+	url = https://github.com/carhartl/jquery-cookie.git
