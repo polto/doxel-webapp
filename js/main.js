@@ -243,6 +243,15 @@ var views={
       },
 
       /**
+      * @method views.plupload.uploaderEvents.FilesAdded
+      *
+      */
+      FilesAdded: function views_plupload_uploaderEvents_filesAdded(uploader,files){
+          // re-enable alert on duplicate file
+          uploader.file_duplicate_error_occured=false;
+      },
+
+      /**
       * @method views.plupload.uploaderEvents.QueueChanged
       *
       * @param {Object} [uploader]
