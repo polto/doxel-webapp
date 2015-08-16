@@ -490,6 +490,16 @@ var views={
         }, // jquery.plupload.init
 
        /**
+        * @method jquery.plupload.selected
+        *
+        * select added files
+        *
+        */
+        selected: function(e,o){
+            views.plupload.selectFiles(o.files);
+        }, // selected
+
+       /**
         * @method jquery.plupload.start
         *
         * uploader is started
