@@ -39,7 +39,7 @@ if (isset($_COOKIE['token'])) {
 } else {
   $length=16;
   $token=bin2hex(openssl_random_pseudo_bytes($length));
-  setcookie( "token", $token, 2**31 /* 2038-01-19 04:14:07 */ );
+  setcookie( "token", $token, pow(2,31) /* 2038-01-19 04:14:07 */ );
 }
 
 if (isset($_COOKIE['fingerprint'])) {
