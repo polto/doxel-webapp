@@ -2,14 +2,14 @@
 /*
  * cookies.inc
  *
- * Copyright (c) 2015 DOXEL SA - http://doxel.ch
- * Please read <http://doxel.ch/license> for more information.
+ * Copyright (c) 2015 DOXEL SA - http://doxel.org
+ * Please read <http://doxel.org/license> for more information.
  *
  * Author(s):
  *
  *      Rurik Bugdanov <rurik.bugdanov@alsenet.com>
  *
- * This file is part of the DOXEL project <http://doxel.ch>.
+ * This file is part of the DOXEL project <http://doxel.org>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,7 @@
  *      containing it.
  *
  *      You are required to attribute the work as explained in the "Usage and
- *      Attribution" section of <http://doxel.ch/license>.
+ *      Attribution" section of <http://doxel.org/license>.
  */
 
 if (isset($_COOKIE['token'])) {
