@@ -243,12 +243,22 @@ var views={
       },
 
       /**
+      * @method views.plupload.uploaderEvents.browse
+      *
+      */
+      Browse: function views_plupload_uploaderEvents_browse(uploader){
+        uploader.file_duplicate_count=0;
+      },
+
+      /**
       * @method views.plupload.uploaderEvents.FilesAdded
       *
       */
       FilesAdded: function views_plupload_uploaderEvents_filesAdded(uploader,files){
-          // re-enable alert on duplicate file
-          uploader.file_duplicate_error_occured=false;
+        if (uploader.file_duplicate_count) {
+            alert(uploader.file_duplicate_count+' duplicate files were discarded.');
+            uploader.file_duplicate_count=0;
+        }
       },
 
       /**
@@ -287,12 +297,20 @@ var views={
       */
       StateChanged: function views_plupload_uploaderEvents_StateChanged(uploader) {
 
-        // hide buttons during upload
-        if (uploader.state === plupload.STARTED) {
-          $('.plupload_buttons', views.plupload.container).hide(0);
+        switch (uploader.state) {
+            case plupload.STARTED:
+                // hide buttons during upload
+                $('.plupload_buttons', views.plupload.container).hide(0);
+                break;
 
-        } else {
-          $('.plupload_buttons', views.plupload.container).show(0);
+            case plupload.STOPPED:
+                // show buttons hidden during upload
+                $('.plupload_buttons', views.plupload.container).show(0);
+
+                if (uploader.file_duplicate_count) {
+                    alert(uploader.file_duplicate_count+' duplicate files were discarded by server.');
+                    uploader.file_duplicate_count=0;
+                }
         }
 
       }, // views.plupload.uploaderEvents.StateChanged
@@ -360,14 +378,13 @@ var views={
                   console.log(date_str,e);
                 }
               }
-
-              // set metadata to be uploaded
-              uploader.setOption('multipart_params',{
-                timestamp: timestamp,
-                user: webapp.fingerprint
-              });
-
             }
+
+            // set metadata to be uploaded
+            uploader.setOption('multipart_params',{
+              timestamp: timestamp,
+              user: webapp.fingerprint
+            });
 
             // start upload
             plupload.onUploadFile.call(this,uploader,file)
@@ -400,7 +417,6 @@ var views={
 
           // upload failed
           if (response.error) {
-            alert(response.error.message);
 
             // set file status icon
             file.status=plupload.FAILED;
@@ -409,7 +425,14 @@ var views={
             // set file status icon text
             $('.plupload_action_icon',$file).attr('title',response.error.message);
 
-            uploader.stop();
+            // duplicate file ?
+            if (response.error.code==904) {
+                ++uploader.file_duplicate_count;
+
+            } else {
+              alert(response.error.message);
+              uploader.stop();
+            }
 
           } else {
 

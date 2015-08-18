@@ -18,7 +18,6 @@ include "cookies.inc";
 #!! is not recommended to be used in production environment as it is. Be sure to 
 #!! revise it and customize to your needs.
 
-
 // Make sure file is not cached (as it happens for example on iOS devices)
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
@@ -35,11 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 */
 
-// 5 minutes execution time
-set_time_limit(5 * 60);
-
-// Uncomment this one to fake upload time
-//usleep(1100000);
+include('upload.config.inc');
 
 // get user id, check for hexadecimal only
 $userDirectory = $_COOKIE['fingerprint'];
@@ -53,33 +48,40 @@ if (!preg_match('/^[0-9]{10}_[0-9]{6}$/', $timestamp)) {
     die('{"jsonrpc" : "2.0", "error" : {"code": 901, "message": "Invalid timestamp."}, "id" : "id"}');
 }                                   
 
-// Settings
-
-$upload_tmp_dir = sys_get_temp_dir();
-$tmpDir = $upload_tmp_dir . DIRECTORY_SEPARATOR . "plupload";
-$targetDir_digits=6;
-$targetDir = "../upload" . DIRECTORY_SEPARATOR . $userDirectory . DIRECTORY_SEPARATOR . substr($timestamp,0,$targetDir_digits);
-$cleanupTmpDir = true; // Remove old files
-$maxFileAge = 5 * 3600; // Temp file age in seconds
+$targetDir = getTargetDir($userDirectory,$timestamp);
 
 // Create tmp dir
 if (!file_exists($tmpDir)) {
-  if (!mkdir($tmpDir,0755,true)) {
-    die('{"jsonrpc" : "2.0", "error" : {"code": 903, "message": "Could not create temporary directory."}, "id" : "id"}');
+  if (!mkdir($tmpDir,$tmpDirMod,true)) {
+    die('{"jsonrpc" : "2.0", "error" : {"code": 903, "message": "Could not create temporary directory '.$tmpDir.'."}, "id" : "id"}');
   }
+}
+
+function getDiskUsage($directory) {
+  $total=disk_total_space($directory);
+  $free=disk_free_space($directory);
+  if (!$total || ! $free) {
+    die('{"jsonrpc" : "2.0", "error" : {"code": 906, "message": "Could not compute free space on '.$directory.'"}, "id" : "id"}');
+  }
+  return $free/$total*100.0;
+}
+
+if (getDiskUsage($tmpDir) > $maxDiskUsage) {
+    die('{"jsonrpc" : "2.0", "error" : {"code": 907, "message": "Temporary disk is full !"}, "id" : "id"}');
 }
 
 // Get a file name
 if (isset($_REQUEST["name"])) {
-	$fileName = $_REQUEST["name"];
+	$originalFilename = $_REQUEST["name"];
 } elseif (!empty($_FILES)) {
-	$fileName = $_FILES["file"]["name"];
+	$originalFilename = $_FILES["file"]["name"];
 } else {
-	$fileName = uniqid("file_");
+	$originalFilename = uniqid("file_");
 }
 
-$tmpFilePath = $tmpDir . DIRECTORY_SEPARATOR . $userDirectory . '-' . $timestamp;
-$filePath = $targetDir . DIRECTORY_SEPARATOR . $timestamp;
+$tmpFilename = $tmpDir . DIRECTORY_SEPARATOR . $userDirectory . '-' . $timestamp . '.part';
+$destBasename = $targetDir . DIRECTORY_SEPARATOR . $timestamp;
+
 
 // Chunking might be enabled
 $chunk = isset($_REQUEST["chunk"]) ? intval($_REQUEST["chunk"]) : 0;
@@ -93,24 +95,23 @@ if ($cleanupTmpDir) {
 	}
 
 	while (($file = readdir($dir)) !== false) {
-		$_tmpFilePath = $tmpDir . DIRECTORY_SEPARATOR . $file;
+		$file = $tmpDir . DIRECTORY_SEPARATOR . $file;
 
 		// If temp file is current file proceed to the next
-		if ($_tmpFilePath == "{$tmpFilePath}.part") {
+		if ($file == $tmpFilename) {
 			continue;
 		}
 
 		// Remove temp file if it is older than the max age and is not the current file
-		if (preg_match('/\.part$/', $file) && (filemtime($_tmpFilePath) < time() - $maxFileAge)) {
-			unlink($_tmpFilePath);
+		if (preg_match('/\.part$/', $file) && (filemtime($file) < time() - $maxFileAge)) {
+			unlink($file);
 		}
 	}
 	closedir($dir);
 }	
 
-
 // Open temp file
-if (!$out = fopen("{$tmpFilePath}.part", $chunks && $chunk ? "ab" : "wb")) {
+if (!$out = fopen($tmpFilename, $chunks && $chunk ? "ab" : "wb")) {
 	die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
 }
 
@@ -141,21 +142,43 @@ if (!$chunks || $chunk == $chunks - 1) {
 
   // get mime type
   $finfo = finfo_open(FILEINFO_MIME_TYPE);
-  $mime = explode('/',finfo_file($finfo,"{$tmpFilePath}.part"));
+  $mime = explode('/',finfo_file($finfo,$tmpFilename));
   if ($mime[0]!='image') {
-    unlink("{$tmpFilePath}.part");
+    unlink($tmpFilename);
     die('{"jsonrpc" : "2.0", "error" : {"code": 902, "message": "Not an image."}, "id" : "id"}');
   }
 
+  $destFilename="{$destBasename}.$mime[1]";
+
   // Create target dir
   if (!file_exists($targetDir)) {
-    if (!mkdir($targetDir,0755,true)) {
+    if (!mkdir($targetDir,$targetDirMod,true)) {
       die('{"jsonrpc" : "2.0", "error" : {"code": 903, "message": "Could not create target directory '.$targetDir.'."}, "id" : "id"}');
     }
   }
 
+  if (getDiskUsage($targetDir) > $maxDiskUsage) {
+      die('{"jsonrpc" : "2.0", "error" : {"code": 908, "message": "Target disk is full !"}, "id" : "id"}');
+  }
+
+  // check for duplicate timestamp
+  $num=1;
+  while(file_exists($destFilename)) {
+
+      // throw an error if filesize match too
+      if (filesize($destFilename)==filesize($tmpFilename)) {
+        die('{"jsonrpc" : "2.0", "error" : {"code": 904, "message": "Duplicate file: '."{$timestamp}.$mime[1]".'."}, "id" : "id"}');
+      }
+
+      // else rename destination file
+      $destFilename="{$destBasename}.{$num}.$mime[1]";
+      ++$num;
+  }
+
 	// Move and strip the temp .part suffix off 
-	rename("{$tmpFilePath}.part", "{$filePath}.$mime[1]");
+  if (!rename($tmpFilename, $destFilename)) {
+      die('{"jsonrpc" : "2.0", "error" : {"code": 905, "message": "Could not move temporary file to destination."}, "id" : "id"}');
+  }
 }
 
 // Return Success JSON-RPC response
