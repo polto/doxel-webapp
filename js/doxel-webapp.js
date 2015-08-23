@@ -260,8 +260,23 @@ var views={
 
               if (date_str) {
                 try {
-                  var _timestamp=new Date(date_str.replace(/([0-9]{4}):([0-9]{2}):([0-9]{2})/,"$1-$2-$3")).getTime();
-                  timestamp=String(_timestamp).replace(/([0-9]{10})/,'$1_')+'000';
+                  var _timestamp=new Date(date_str.replace(/([0-9]{4}):([0-9]{2}):([0-9]{2})/,"$1/$2/$3")).getTime();
+
+                  if (isNaN(_timestamp)) {
+                     _timestamp=new Date(date_str.replace(/([0-9]{4}):([0-9]{2}):([0-9]{2})/,"$1-$2-$3")).getTime();
+                  }
+
+                  if (isNaN(_timestamp)) {
+
+                    if (!window.invalidTimestamp) {
+                      alert('Could not convert EXIF timestamp. Other occurences will be ignored.');
+                      window.invalidTimestamp=true;
+                    }
+
+                  } else {
+                    timestamp=String(_timestamp).replace(/([0-9]{10})/,'$1_')+'000';
+
+                  }
 
                 } catch(e) {
                   console.log(date_str,e);
