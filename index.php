@@ -43,7 +43,7 @@ if (isset($_POST['q'])) {
   $q=$_GET['q'];
 
 } else {
-  include('index.inc');
+  include('php/index.inc');
   exit(0);
 
 }
