@@ -58,7 +58,7 @@ if (!file_exists($tmpDir)) {
 }
 
 function getDiskUsage($directory) {
-  $total=disk_total_space($directory);
+  $total=disk_total_space($directory)+$_SERVER['CONTENT_LENGTH'];
   $free=disk_free_space($directory);
   if (!$total || ! $free) {
     die('{"jsonrpc" : "2.0", "error" : {"code": 906, "message": "Could not compute free space on '.$directory.'"}, "id" : "id"}');
@@ -104,7 +104,9 @@ if ($cleanupTmpDir) {
 
 		// Remove temp file if it is older than the max age and is not the current file
 		if (preg_match('/\.part$/', $file) && (filemtime($file) < time() - $maxFileAge)) {
-			unlink($file);
+      if (!unlink($file)) {
+		    die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Failed to remove temporary file."}, "id" : "id"}');
+      }
 		}
 	}
 	closedir($dir);
@@ -112,7 +114,7 @@ if ($cleanupTmpDir) {
 
 // Open temp file
 if (!$out = fopen($tmpFilename, $chunks && $chunk ? "ab" : "wb")) {
-	die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
+	die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream. Check remote upload folder permissions."}, "id" : "id"}');
 }
 
 if (!empty($_FILES)) {
@@ -129,9 +131,18 @@ if (!empty($_FILES)) {
 		die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
 	}
 }
+$contentLength=$_SERVER['CONTENT_LENGTH'];
 
 while ($buff = fread($in, 4096)) {
-	fwrite($out, $buff);
+  fwrite($out, $buff);
+
+  // check if file size exceed content-size
+  $contentSize+=strlen($buff);
+  if ($contentSize>$contentLength) {
+    fclose($out);
+    unlink($tmpFilename);
+    die('{"jsonrpc" : "2.0", "error" : {"code": 105, "message": "File size exceed content-length !"}, "id" : "id"}');
+  }
 }
 
 fclose($out);
