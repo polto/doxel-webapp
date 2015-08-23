@@ -307,6 +307,21 @@ var views={
           // upload failed
           if (response.error) {
 
+            // marked as duplicate on server side ?
+            if (response.error.code==904) {
+
+                // increment dupliate count
+                ++uploader.file_duplicate_count;
+
+                // mark as uploaded
+                file.status=plupload.DONE;
+
+                // remove DOM element
+                $file.remove();
+
+                return;
+            }
+
             // set file status icon
             file.status=plupload.FAILED;
             file._handleFileStatus(file);
@@ -314,22 +329,13 @@ var views={
             // set file status icon text
             $('.plupload_action_icon',$file).attr('title',response.error.message);
 
-            // duplicate file ?
-            if (response.error.code==904) {
-                ++uploader.file_duplicate_count;
-
-                // remove DOM element
-                $file.remove();
-
-            } else {
-              alert(response.error.message);
-              uploader.stop();
-            }
+            alert(response.error.message);
+            uploader.stop();
 
           } else {
-
              // remove DOM element after upload
              $file.remove();
+
           }
 
       }, // views.plupload.uploaderEvents.FileUploaded
