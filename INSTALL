@@ -1,0 +1,24 @@
+INSTALLATION
+
+  For example:
+
+    # change to your website root directory
+    cd /var/www/html
+
+    # clone the git repository recursively
+    git clone https://github.com/doxel/doxel-webapp --recursive
+
+    # change the owner of the upload directory
+    chown www-data.www-data doxel-webapp/upload -R
+
+    # set permissions for the upload directory
+    chmod 0755 doxel-webapp/upload doxel-webapp/upload/tmp
+
+
+  You may have to adapt the above procedure for your environment or requirements.
+
+
+CONFIGURATION
+
+  You may edit upload related settings in doxel-webapp/php/upload.config.inc
+
