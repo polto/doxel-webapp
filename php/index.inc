@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="js/thirdparty/jquery-ui/themes/base/jquery-ui.css" type="text/css" />
     <link rel="stylesheet" href="js/thirdparty/plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
 
-    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/doxel-webapp.css">
     <script type="text/javascript" src="js/thirdparty/jquery-2.1.4.js"></script>
     <script type="text/javascript" src="js/thirdparty/jquery-ui/jquery-ui.js"></script>
     <script type="text/javascript" src="js/thirdparty/blueimp-load-image/js/load-image.js"></script>
