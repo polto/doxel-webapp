@@ -13,11 +13,6 @@ include "cookies.inc";
  *
  */
 
-#!! IMPORTANT: 
-#!! this file is just an example, it doesn't incorporate any security checks and 
-#!! is not recommended to be used in production environment as it is. Be sure to 
-#!! revise it and customize to your needs.
-
 // Make sure file is not cached (as it happens for example on iOS devices)
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
@@ -131,7 +126,9 @@ if (!empty($_FILES)) {
 		die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
 	}
 }
+
 $contentLength=$_SERVER['CONTENT_LENGTH'];
+$contentSize=0;
 
 while ($buff = fread($in, 4096)) {
   fwrite($out, $buff);
@@ -156,7 +153,7 @@ if (!$chunks || $chunk == $chunks - 1) {
   $mime = explode('/',finfo_file($finfo,$tmpFilename));
   if ($mime[0]!='image') {
     unlink($tmpFilename);
-    die('{"jsonrpc" : "2.0", "error" : {"code": 902, "message": "Not an image."}, "id" : "id"}');
+    die('{"jsonrpc" : "2.0", "error" : {"code": 902, "message": "Not an image: '.$originalFilename.'"}, "id" : "id"}');
   }
 
   $destFilename="{$destBasename}.$mime[1]";
@@ -178,7 +175,7 @@ if (!$chunks || $chunk == $chunks - 1) {
 
       // throw an error if filesize match too
       if (filesize($destFilename)==filesize($tmpFilename)) {
-        die('{"jsonrpc" : "2.0", "error" : {"code": 904, "message": "Duplicate file: '."{$timestamp}.$mime[1]".'."}, "id" : "id"}');
+        die('{"jsonrpc" : "2.0", "error" : {"code": 904, "message": "Duplicate file: '."$originalFilename ({$timestamp}.$mime[1])".'."}, "id" : "id"}');
       }
 
       // else rename destination file
