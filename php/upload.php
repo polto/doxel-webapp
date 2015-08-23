@@ -53,7 +53,7 @@ $targetDir = getTargetDir($userDirectory,$timestamp);
 // Create tmp dir
 if (!file_exists($tmpDir)) {
   if (!mkdir($tmpDir,$tmpDirMod,true)) {
-    die('{"jsonrpc" : "2.0", "error" : {"code": 903, "message": "Could not create temporary directory '.$tmpDir.'."}, "id" : "id"}');
+    die('{"jsonrpc" : "2.0", "error" : {"code": 903, "message": "Could not create remote temporary directory '.$tmpDir.'."}, "id" : "id"}');
   }
 }
 
@@ -67,7 +67,7 @@ function getDiskUsage($directory) {
 }
 
 if (getDiskUsage($tmpDir) > $maxDiskUsage) {
-    die('{"jsonrpc" : "2.0", "error" : {"code": 907, "message": "Temporary disk is full !"}, "id" : "id"}');
+    die('{"jsonrpc" : "2.0", "error" : {"code": 907, "message": "Remote temporary disk is full !"}, "id" : "id"}');
 }
 
 // Get a file name
